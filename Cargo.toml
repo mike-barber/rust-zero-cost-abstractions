@@ -2,3 +2,15 @@
 members = [ 
     "rust-zca-bench"
 ]
+
+
+
+[profile.bench]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

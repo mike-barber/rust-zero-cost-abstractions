@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
+rand = "0.8"
 
 [dev-dependencies]
 criterion = "0.3"
@@ -15,3 +15,4 @@ criterion = "0.3"
 [[bench]]
 name = "zca_benchmark"
 harness = false
+
