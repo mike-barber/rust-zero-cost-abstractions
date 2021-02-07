@@ -6,10 +6,12 @@
     <RootNamespace>CsharpBench</RootNamespace>
     <DebugType>pdbonly</DebugType>
     <DebugSymbols>true</DebugSymbols>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
+    <PackageReference Include="Xunit.Assert" Version="2.4.1" />
   </ItemGroup>
 
 </Project>
