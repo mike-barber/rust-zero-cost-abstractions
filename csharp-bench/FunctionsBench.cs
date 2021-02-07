@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using BenchmarkDotNet.Attributes;
 using Xunit;
 
@@ -24,21 +26,30 @@ namespace CsharpBench
             self.DirectBranchless();
             self.DirectUnrolled();
             self.DirectUnsafe();
+            self.DirectUnsafeAvx();
             self.Iterator();
             self.IteratorSimpler();
             self.SelectBaseline();
 
             // check valid 
-            var va = new[] { 1, 2, 3, 4, 5 };
-            var vb = new[] { 5, 6, 7, 8, 9 };
-            var expected = 3*7 + 4*8 + 5*9;
+            var va = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+            var vb = new[] { 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+            var expected = 900;
 
             Assert.Equal(expected, CalculateDirect(va,vb));
             Assert.Equal(expected, CalculateDirectBranchless(va,vb));
             Assert.Equal(expected, CalculateDirectUnrolled(va,vb));
             Assert.Equal(expected, CalculateDirectUnsafe(va,vb));
+            Assert.Equal(expected, CalculateDirectUnsafeAvx(va, vb));
             Assert.Equal(expected, CalculateIterator(va,vb));
             Assert.Equal(expected, CalculateIteratorSimpler(va,vb));
+
+            // check the hand-coded risky ones agree for long vectors
+            var first = self.testSet.Get(0);
+            var second = self.testSet.Get(1);
+            Assert.Equal(CalculateDirect(first, second), CalculateDirectUnrolled(first, second));
+            Assert.Equal(CalculateDirect(first, second), CalculateDirectUnsafe(first, second));
+            Assert.Equal(CalculateDirect(first, second), CalculateDirectUnsafeAvx(first, second));
 
             Console.WriteLine("SelfTest checks succeeded");
             Console.WriteLine();
@@ -99,7 +110,7 @@ namespace CsharpBench
                 var f0 = sa[0] > 2;
                 var f1 = sa[1] > 2;
                 var f2 = sa[2] > 2;
-                var f3 = sa[2] > 3;
+                var f3 = sa[3] > 2;
                 var m0 = -Unsafe.As<bool, int>(ref f0);
                 var m1 = -Unsafe.As<bool, int>(ref f1);
                 var m2 = -Unsafe.As<bool, int>(ref f2);
@@ -132,10 +143,12 @@ namespace CsharpBench
             return sum;
         }
 
-        // TODO: create an unrolled or SIMD version 
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long CalculateDirectUnsafe(int[] va, int[] vb)
         {
+            if (va.Length != vb.Length) throw new ArgumentException("length mismatch");
+
             long sum = 0;
             unsafe
             {
@@ -162,6 +175,76 @@ namespace CsharpBench
             }
             return sum;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long CalculateDirectUnsafeAvx(int[] vecta, int[] vectb)
+        {
+            if (vecta.Length != vectb.Length) throw new ArgumentException("length mismatch");
+
+            long sum = 0;
+            var len = vecta.Length;
+            var chunkEndIndex = (len >> 3) << 3;
+            unsafe
+            {
+                fixed (int* ptra = vecta, ptrb = vectb)
+                {
+                    var chunkEnd = ptra + chunkEndIndex;
+                    var allEnd = ptra + len;
+                    var pa = ptra;
+                    var pb = ptrb;
+
+                    var value2 = Vector256.Create(2);
+                    var value0 = Vector256.Create(0);
+
+                    var acc1 = Vector256.Create(0L);
+                    var acc2 = Vector256.Create(0L);
+
+                    while (pa < chunkEnd)
+                    {
+                        var a = Avx.LoadVector256(pa);
+                        var b = Avx.LoadVector256(pb);
+
+                        var mask = Avx2.CompareGreaterThan(a, value2);
+                        a = Avx2.And(a, mask);
+
+                        // odd numbered elements
+                        var m1 = Avx2.Multiply(a, b);
+                        acc1 = Avx2.Add(acc1, m1);
+
+                        // shuffle adjacent and multiply again
+                        a = Avx2.Shuffle(a, 0b10_11_00_01);
+                        b = Avx2.Shuffle(b, 0b10_11_00_01);
+                        var m2 = Avx2.Multiply(a, b);
+                        acc2 = Avx2.Add(acc2, m2);
+
+                        pa += 8;
+                        pb += 8;
+                    }
+                    while (pa < allEnd)
+                    {
+                        // could do something smart like a masked load here, but hey
+                        var a = Vector256.CreateScalar(*pa);
+                        var b = Vector256.CreateScalar(*pb);
+
+                        // as above, accumulating into acc1 
+                        var mask = Avx2.CompareGreaterThan(a, value2);
+                        a = Avx2.And(a, mask);
+                        var m1 = Avx2.Multiply(a, b);
+                        acc1 = Avx2.Add(acc1, m1);
+
+                        pa++;
+                        pb++;
+                    }
+
+                    // net everything
+                    acc1 = Avx2.Add(acc1, acc2);
+                    sum = acc1.GetElement(0) + acc1.GetElement(1) + acc1.GetElement(2) + acc1.GetElement(3);
+                }
+            }
+            return sum;
+        }
+
+        
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long CalculateIterator(int[] va, int[] vb)
@@ -217,6 +300,14 @@ namespace CsharpBench
         {
             var (va, vb) = testSet.Sample(rng);
             var res = CalculateDirectUnsafe(va, vb);
+            return res;
+        }
+
+        [Benchmark]
+        public long DirectUnsafeAvx()
+        {
+            var (va, vb) = testSet.Sample(rng);
+            var res = CalculateDirectUnsafeAvx(va, vb);
             return res;
         }
 
