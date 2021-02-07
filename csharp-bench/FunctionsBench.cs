@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using Xunit;
 
@@ -21,6 +22,7 @@ namespace CsharpBench
             var self = new FunctionsBench();
             self.Direct();
             self.DirectBranchless();
+            self.DirectUnrolled();
             self.DirectUnsafe();
             self.Iterator();
             self.IteratorSimpler();
@@ -33,6 +35,7 @@ namespace CsharpBench
 
             Assert.Equal(expected, CalculateDirect(va,vb));
             Assert.Equal(expected, CalculateDirectBranchless(va,vb));
+            Assert.Equal(expected, CalculateDirectUnrolled(va,vb));
             Assert.Equal(expected, CalculateDirectUnsafe(va,vb));
             Assert.Equal(expected, CalculateIterator(va,vb));
             Assert.Equal(expected, CalculateIteratorSimpler(va,vb));
@@ -41,6 +44,7 @@ namespace CsharpBench
             Console.WriteLine();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long CalculateDirect(int[] va, int[] vb)
         {
             long sum = 0;
@@ -56,6 +60,7 @@ namespace CsharpBench
             return sum;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long CalculateDirectBranchless(int[] va, int[] vb)
         {
             long sum = 0;
@@ -75,7 +80,60 @@ namespace CsharpBench
             return sum;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long CalculateDirectUnrolled(int[] va, int[] vb)
+        {
+            long sum = 0;
+
+            var len = va.Length;
+            var spana = va.AsSpan(0, len);
+            var spanb = vb.AsSpan(0, len);
+            var chunkEnd = (len >> 2) << 2; 
+
+            var i = 0;
+            while (i < chunkEnd) 
+            {
+                var sa = spana.Slice(i, 4);
+                var sb = spanb.Slice(i, 4);
+
+                var f0 = sa[0] > 2;
+                var f1 = sa[1] > 2;
+                var f2 = sa[2] > 2;
+                var f3 = sa[2] > 3;
+                var m0 = -Unsafe.As<bool, int>(ref f0);
+                var m1 = -Unsafe.As<bool, int>(ref f1);
+                var m2 = -Unsafe.As<bool, int>(ref f2);
+                var m3 = -Unsafe.As<bool, int>(ref f3);
+
+                var v0 = m0 & (sa[0] * sb[0]);
+                var v1 = m1 & (sa[1] * sb[1]);
+                var v2 = m2 & (sa[2] * sb[2]);
+                var v3 = m3 & (sa[3] * sb[3]);
+
+                var v01 = v0 + v1;
+                var v23 = v2 + v3;
+                sum += v01;
+                sum += v23;
+
+                i += 4;
+            }
+            while (i < len) {
+                var a = spana[i];
+                var b = spanb[i];
+                
+                var f = a > 2;
+                var m = -Unsafe.As<bool, int>(ref f);
+
+                var v = m & (a*b);
+                sum += v;
+
+                ++i;
+            }
+            return sum;
+        }
+
         // TODO: create an unrolled or SIMD version 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long CalculateDirectUnsafe(int[] va, int[] vb)
         {
             long sum = 0;
@@ -105,6 +163,7 @@ namespace CsharpBench
             return sum;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long CalculateIterator(int[] va, int[] vb)
         {
             var res = va.Zip(vb)
@@ -114,6 +173,7 @@ namespace CsharpBench
             return res;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long CalculateIteratorSimpler(int[] va, int[] vb)
         {
             var res = va.Zip(vb)
@@ -141,6 +201,14 @@ namespace CsharpBench
         {
             var (va, vb) = testSet.Sample(rng);
             var res = CalculateDirectBranchless(va, vb);
+            return res;
+        }
+
+        [Benchmark]
+        public long DirectUnrolled()
+        {
+            var (va, vb) = testSet.Sample(rng);
+            var res = CalculateDirectUnrolled(va, vb);
             return res;
         }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace CsharpBench
 {
@@ -18,6 +19,7 @@ namespace CsharpBench
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public (int[], int[]) Sample(Random rng)
         {
             var numVecs = vectors.Count;
