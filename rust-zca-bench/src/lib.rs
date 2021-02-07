@@ -108,9 +108,12 @@ pub fn calculate_fold(slice_a: &[i32], slice_b: &[i32]) -> i64 {
 mod tests {
     use super::*;
 
-    const EXPECTED_RESULT: i64 = 3 * 7 + 4 * 8 + 5 * 9;
+    const EXPECTED_RESULT: i64 = 900;
     fn reference_vecs() -> (Vec<i32>, Vec<i32>) {
-        (vec![1, 2, 3, 4, 5], vec![5, 6, 7, 8, 9])
+        (
+            vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            vec![11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+        )
     }
 
     #[test]
@@ -124,13 +127,13 @@ mod tests {
     fn calculate_iter_correct() {
         let (a, b) = reference_vecs();
         let res = calculate_iter(&a, &b);
-        assert_eq!(EXPECTED_RESULT, res, "direct was {}", res);
+        assert_eq!(EXPECTED_RESULT, res, "iter was {}", res);
     }
 
     #[test]
     fn calculate_fold_correct() {
         let (a, b) = reference_vecs();
         let res = calculate_iter(&a, &b);
-        assert_eq!(EXPECTED_RESULT, res, "direct was {}", res);
+        assert_eq!(EXPECTED_RESULT, res, "fold was {}", res);
     }
 }
