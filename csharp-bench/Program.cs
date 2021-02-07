@@ -1,12 +1,14 @@
 ﻿using System;
+using BenchmarkDotNet.Running;
 
-namespace csharp_bench
+namespace CsharpBench
 {
     class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            FunctionsBench.SelfTest();
+            BenchmarkRunner.Run<FunctionsBench>();
         }
     }
 }
