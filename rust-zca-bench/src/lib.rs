@@ -1,9 +1,9 @@
 //! Test various zero-cost abstractions.
 //! We create a TestSet from which we sample pairs of vectors.
-//! 
+//!
 //! Then we have various functions that calculate a number based on a pair of vectors,
 //! according to these rules for vectors `va` and `vb`:
-//! 
+//!
 //! - Start with `sum = 0`
 //! - for every pair `a`, `b` in aligned vectors `va`, `vb`
 //!   - if `a > 2`, then `sum += a * b`
@@ -14,20 +14,20 @@
 use rand::{distributions::Uniform, Rng};
 
 /// TestSet maintains a bunch of vectors, and provides a way to
-/// randomly sample pairs of them. 
+/// randomly sample pairs of them.
 ///
 /// Create a TestSet with 100 vectors, of 20k length, then
-/// sample from it. 
+/// sample from it.
 /// ```
 /// // create the test set
 /// use rust_zca_bench::TestSet;
 /// use rand::thread_rng;
-/// 
+///
 /// let mut rng = thread_rng();
 /// let test_set = TestSet::create(20_000, 100, &mut rng);
 /// assert_eq!(100, test_set.num_vecs());
 /// assert_eq!(20_000, test_set.vec_length());
-/// 
+///
 /// // sample from it
 /// let (v1,v2) = test_set.sample_pair(&mut rng);
 /// assert_eq!(20_000, v1.len());
@@ -61,8 +61,12 @@ impl TestSet {
         (vv1, vv2)
     }
 
-    pub fn num_vecs(&self) -> usize { self.vectors.len() }
-    pub fn vec_length(&self) -> usize { self.vectors.first().unwrap().len() }
+    pub fn num_vecs(&self) -> usize {
+        self.vectors.len()
+    }
+    pub fn vec_length(&self) -> usize {
+        self.vectors.first().unwrap().len()
+    }
 }
 
 /// imperative calculation by looping and adding, but still using iterators
@@ -76,7 +80,7 @@ pub fn calculate_direct(slice_a: &[i32], slice_b: &[i32]) -> i64 {
     res
 }
 
-/// functional calculation using filter_map to simultaneously filter and map 
+/// functional calculation using filter_map to simultaneously filter and map
 /// values. Each pair returns an Option.
 pub fn calculate_iter(slice_a: &[i32], slice_b: &[i32]) -> i64 {
     slice_a
