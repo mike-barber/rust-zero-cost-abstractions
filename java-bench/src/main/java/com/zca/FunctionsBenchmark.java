@@ -2,9 +2,14 @@
 package com.zca;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -20,7 +25,7 @@ public class FunctionsBenchmark {
 
     static int numVecs = 100;
     static int vecLength = 20000;
-    private ArrayList<int[]> vectors;
+    private List<int[]> vectors;
 
     // thread-local state 
     @State(Scope.Thread)
@@ -51,6 +56,16 @@ public class FunctionsBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(value = 1, warmups = 1)
+    public int benchmarkBaselineSelect() {
+        var va = Sample(ThreadState.rng);
+        var vb = Sample(ThreadState.rng);
+        return va.length + vb.length;
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    @Fork(value = 1, warmups = 1)
     public long benchmarkDirect() {
         long sum = 0;
         var va = Sample(ThreadState.rng);
@@ -69,10 +84,44 @@ public class FunctionsBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     @Fork(value = 1, warmups = 1)
-    public int benchmarkBaselineSelect() {
+    public long benchmarkIterator() {
         var va = Sample(ThreadState.rng);
         var vb = Sample(ThreadState.rng);
-        return va.length + vb.length;
+
+        long sum = zip(Arrays.stream(va), Arrays.stream(vb))
+            .filter((t) -> t.a > 2)
+            .map((t) -> (long)(t.a * t.b))
+            .reduce(0l, Long::sum);
+                   
+        return sum;
+    }
+
+    // pretty much have to define this myself
+    public class Tuple {
+        public int a;
+        public int b;
+        public Tuple(int a, int b) {
+            this.a = a;
+            this.b = b;
+        }
+    }
+
+    // pretty much have to write this; no built-in zip iteration
+    public Stream<Tuple> zip(IntStream sa, IntStream sb) {
+        final var ia = sa.iterator();
+        final var ib = sb.iterator();
+        Iterator<Tuple> iter = new Iterator<Tuple>() {
+            @Override
+            public boolean hasNext() {
+                return ia.hasNext() && ib.hasNext();
+            }
+            @Override
+            public Tuple next() {
+                return new Tuple(ia.next(), ib.next());
+            }
+        };
+        Iterable<Tuple> iterable = () -> iter;
+        return StreamSupport.stream(iterable.spliterator(),false);
     }
 
 }

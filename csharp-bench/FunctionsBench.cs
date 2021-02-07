@@ -69,10 +69,7 @@ namespace CsharpBench
                 int includeMask = -System.Runtime.CompilerServices.Unsafe.As<bool, int>(ref includeFlag);
 
                 // mutliply apply mask
-                int mult = a * b;
-                int gated = includeMask & mult;
-
-                //Console.WriteLine($"{a} {b} gated {gated} include mask {includeMask:x}");
+                int gated = includeMask & (a * b);
                 sum += gated;
             }
             return sum;
