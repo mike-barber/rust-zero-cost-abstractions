@@ -89,8 +89,8 @@ public class FunctionsBenchmark {
         var vb = Sample(ThreadState.rng);
 
         long sum = zip(Arrays.stream(va), Arrays.stream(vb))
-            .filter((t) -> t.a > 2)
-            .map((t) -> (long)(t.a * t.b))
+            .filter(t -> t.a > 2)
+            .map(t -> (long)(t.a * t.b))
             .reduce(0l, Long::sum);
                    
         return sum;
