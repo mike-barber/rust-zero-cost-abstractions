@@ -163,10 +163,12 @@ namespace CsharpBench
                         var a = *pa;
                         var b = *pb;
 
-                        if (a > 2)
-                        {
-                            sum += a * b;
-                        }
+                        // cast bool to byte 
+                        bool flag = a > 2;
+                        byte* factor = (byte*)&flag;
+
+                        // mutliply through
+                        sum += *factor * a * b;
 
                         pa += 1;
                         pb += 1;
