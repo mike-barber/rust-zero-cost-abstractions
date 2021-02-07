@@ -1,3 +1,5 @@
+use std::iter;
+
 use rand::{distributions::Uniform, Rng};
 
 pub struct TestSet {
@@ -31,9 +33,9 @@ impl TestSet {
 
 pub fn calculate_direct(slice_a: &[i32], slice_b: &[i32]) -> i64 {
     let mut res = 0;
-    for (&a, &b) in slice_a.iter().zip(slice_b.iter()) {
-        if a > 2 {
-            res += a as i64 * b as i64;
+    for (a, b) in slice_a.iter().zip(slice_b.iter()) {
+        if *a > 2 {
+            res += *a as i64 * *b as i64;
         }
     }
     res
@@ -46,6 +48,16 @@ pub fn calculate_iter(slice_a: &[i32], slice_b: &[i32]) -> i64 {
         .filter(|(&a, &_b)| a > 2)
         .map(|(&a, &b)| a as i64 * b as i64)
         .sum()
+}
+
+pub fn calculate_fold(slice_a: &[i32], slice_b: &[i32]) -> i64 {
+    slice_a
+        .iter()
+        .zip(slice_b.iter())
+        .fold(0_i64, |acc, (a, b)| match *a > 2 {
+            true => acc + (*a as i64 * *b as i64),
+            false => acc,
+        })
 }
 
 #[cfg(test)]
