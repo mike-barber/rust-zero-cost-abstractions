@@ -36,13 +36,13 @@ namespace CsharpBench
             var vb = new[] { 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
             var expected = 900;
 
-            Assert.Equal(expected, CalculateDirect(va,vb));
-            Assert.Equal(expected, CalculateDirectBranchless(va,vb));
-            Assert.Equal(expected, CalculateDirectUnrolled(va,vb));
-            Assert.Equal(expected, CalculateDirectUnsafe(va,vb));
+            Assert.Equal(expected, CalculateDirect(va, vb));
+            Assert.Equal(expected, CalculateDirectBranchless(va, vb));
+            Assert.Equal(expected, CalculateDirectUnrolled(va, vb));
+            Assert.Equal(expected, CalculateDirectUnsafe(va, vb));
             Assert.Equal(expected, CalculateDirectUnsafeAvx(va, vb));
-            Assert.Equal(expected, CalculateIterator(va,vb));
-            Assert.Equal(expected, CalculateIteratorSimpler(va,vb));
+            Assert.Equal(expected, CalculateIterator(va, vb));
+            Assert.Equal(expected, CalculateIteratorSimpler(va, vb));
 
             // check the hand-coded risky ones agree for long vectors
             var first = self.testSet.Get(0);
@@ -71,6 +71,12 @@ namespace CsharpBench
             return sum;
         }
 
+        public static int MaskGreaterThan(int value, int greaterThan)
+        {
+            // slightly faster with SSE on Intel, given it's just a scalar anyway
+            return Sse2.CompareGreaterThan(Vector128.CreateScalar(value), Vector128.CreateScalar(greaterThan)).GetElement(0);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long CalculateDirectBranchless(int[] va, int[] vb)
         {
@@ -81,8 +87,9 @@ namespace CsharpBench
                 var b = vb[i];
 
                 // mask is 0xFFFF when flag is true
-                bool includeFlag = a > 2;
-                int includeMask = -System.Runtime.CompilerServices.Unsafe.As<bool, int>(ref includeFlag);
+                // bool includeFlag = a > 2;
+                // int includeMask = -System.Runtime.CompilerServices.Unsafe.As<bool, int>(ref includeFlag);
+                int includeMask = MaskGreaterThan(a, 2);
 
                 // mutliply apply mask
                 int gated = includeMask & (a * b);
@@ -99,22 +106,27 @@ namespace CsharpBench
             var len = va.Length;
             var spana = va.AsSpan(0, len);
             var spanb = vb.AsSpan(0, len);
-            var chunkEnd = (len >> 2) << 2; 
+            var chunkEnd = (len >> 2) << 2;
 
             var i = 0;
-            while (i < chunkEnd) 
+            while (i < chunkEnd)
             {
                 var sa = spana.Slice(i, 4);
                 var sb = spanb.Slice(i, 4);
 
-                var f0 = sa[0] > 2;
-                var f1 = sa[1] > 2;
-                var f2 = sa[2] > 2;
-                var f3 = sa[3] > 2;
-                var m0 = -Unsafe.As<bool, int>(ref f0);
-                var m1 = -Unsafe.As<bool, int>(ref f1);
-                var m2 = -Unsafe.As<bool, int>(ref f2);
-                var m3 = -Unsafe.As<bool, int>(ref f3);
+                // var f0 = sa[0] > 2;
+                // var f1 = sa[1] > 2;
+                // var f2 = sa[2] > 2;
+                // var f3 = sa[3] > 2;
+                // var m0 = -Unsafe.As<bool, int>(ref f0);
+                // var m1 = -Unsafe.As<bool, int>(ref f1);
+                // var m2 = -Unsafe.As<bool, int>(ref f2);
+                // var m3 = -Unsafe.As<bool, int>(ref f3);
+
+                var m0 = MaskGreaterThan(sa[0], 2);
+                var m1 = MaskGreaterThan(sa[1], 2);
+                var m2 = MaskGreaterThan(sa[2], 2);
+                var m3 = MaskGreaterThan(sa[3], 2);
 
                 var v0 = m0 & (sa[0] * sb[0]);
                 var v1 = m1 & (sa[1] * sb[1]);
@@ -128,14 +140,14 @@ namespace CsharpBench
 
                 i += 4;
             }
-            while (i < len) {
+            while (i < len)
+            {
                 var a = spana[i];
                 var b = spanb[i];
-                
-                var f = a > 2;
-                var m = -Unsafe.As<bool, int>(ref f);
 
-                var v = m & (a*b);
+                var m = MaskGreaterThan(a,2);
+
+                var v = m & (a * b);
                 sum += v;
 
                 ++i;
@@ -143,7 +155,7 @@ namespace CsharpBench
             return sum;
         }
 
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long CalculateDirectUnsafe(int[] va, int[] vb)
         {
@@ -164,11 +176,10 @@ namespace CsharpBench
                         var b = *pb;
 
                         // cast bool to byte 
-                        bool flag = a > 2;
-                        byte* factor = (byte*)&flag;
+                        int mask = MaskGreaterThan(a, 2);
 
                         // mutliply through
-                        sum += *factor * a * b;
+                        sum += mask & (a * b);
 
                         pa += 1;
                         pb += 1;
@@ -246,7 +257,7 @@ namespace CsharpBench
             return sum;
         }
 
-        
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long CalculateIterator(int[] va, int[] vb)
