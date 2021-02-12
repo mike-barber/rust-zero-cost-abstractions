@@ -14,6 +14,14 @@ fn function_benchmark(c: &mut Criterion) {
         b.iter(|| test_set.sample_pair(&mut rng))
     });
 
+    c.bench_function("calculate_direct_index", |b| {
+        b.iter(|| {
+            let vecs = test_set.sample_pair(&mut rng);
+            let res = calculate_direct_index(vecs.0, vecs.1);
+            res
+        })
+    });
+
     c.bench_function("calculate_direct", |b| {
         b.iter(|| {
             let vecs = test_set.sample_pair(&mut rng);

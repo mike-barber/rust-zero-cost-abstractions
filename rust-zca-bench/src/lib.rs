@@ -69,6 +69,25 @@ impl TestSet {
     }
 }
 
+/// really old-school directly indexed loop
+pub fn calculate_direct_index(slice_a: &[i32], slice_b: &[i32]) -> i64 {
+    if slice_a.len() != slice_b.len() {
+        panic!("slice length mismatch")
+    }
+
+    let len = slice_a.len();
+    let aa = &slice_a[0..len];
+    let bb = &slice_b[0..len];
+    
+    let mut res = 0;
+    for i in 0..len {
+        if aa[i] > 2 {
+            res += aa[i] as i64 * bb[i] as i64;
+        }
+    }
+    res
+}
+
 /// imperative calculation by looping and adding, but still using iterators
 pub fn calculate_direct(slice_a: &[i32], slice_b: &[i32]) -> i64 {
     let mut res = 0;
@@ -120,6 +139,14 @@ mod tests {
     fn calculate_direct_correct() {
         let (a, b) = reference_vecs();
         let res = calculate_direct(&a, &b);
+        assert_eq!(EXPECTED_RESULT, res, "direct was {}", res);
+    }
+
+    
+    #[test]
+    fn calculate_direct_index_correct() {
+        let (a, b) = reference_vecs();
+        let res = calculate_direct_index(&a, &b);
         assert_eq!(EXPECTED_RESULT, res, "direct was {}", res);
     }
 
