@@ -114,15 +114,6 @@ namespace CsharpBench
                 var sa = spana.Slice(i, 4);
                 var sb = spanb.Slice(i, 4);
 
-                // var f0 = sa[0] > 2;
-                // var f1 = sa[1] > 2;
-                // var f2 = sa[2] > 2;
-                // var f3 = sa[3] > 2;
-                // var m0 = -Unsafe.As<bool, int>(ref f0);
-                // var m1 = -Unsafe.As<bool, int>(ref f1);
-                // var m2 = -Unsafe.As<bool, int>(ref f2);
-                // var m3 = -Unsafe.As<bool, int>(ref f3);
-
                 var m0 = MaskGreaterThan(sa[0], 2);
                 var m1 = MaskGreaterThan(sa[1], 2);
                 var m2 = MaskGreaterThan(sa[2], 2);
@@ -175,10 +166,10 @@ namespace CsharpBench
                         var a = *pa;
                         var b = *pb;
 
-                        // cast bool to byte 
+                        // create mask
                         int mask = MaskGreaterThan(a, 2);
 
-                        // mutliply through
+                        // mutliply through, masking result
                         sum += mask & (a * b);
 
                         pa += 1;
@@ -209,9 +200,11 @@ namespace CsharpBench
                     var value2 = Vector256.Create(2);
                     var value0 = Vector256.Create(0);
 
+                    // two accumulators, each 4 x int64, for total 8 x int64
                     var acc1 = Vector256.Create(0L);
                     var acc2 = Vector256.Create(0L);
 
+                    // main loop -- 8 elements at a time
                     while (pa < chunkEnd)
                     {
                         var a = Avx.LoadVector256(pa);
@@ -220,7 +213,7 @@ namespace CsharpBench
                         var mask = Avx2.CompareGreaterThan(a, value2);
                         a = Avx2.And(a, mask);
 
-                        // odd numbered elements
+                        // odd numbered elements (i32 * i32 -> i64)
                         var m1 = Avx2.Multiply(a, b);
                         acc1 = Avx2.Add(acc1, m1);
 
@@ -233,9 +226,11 @@ namespace CsharpBench
                         pa += 8;
                         pb += 8;
                     }
+                    // tail loop -- single elements
                     while (pa < allEnd)
                     {
-                        // could do something smart like a masked load here, but hey
+                        // could do something smart like a masked load here, but 
+                        // this will do for demonstration purposes.
                         var a = Vector256.CreateScalar(*pa);
                         var b = Vector256.CreateScalar(*pb);
 
@@ -249,7 +244,7 @@ namespace CsharpBench
                         pb++;
                     }
 
-                    // net everything
+                    // sum all the elements
                     acc1 = Avx2.Add(acc1, acc2);
                     sum = acc1.GetElement(0) + acc1.GetElement(1) + acc1.GetElement(2) + acc1.GetElement(3);
                 }
