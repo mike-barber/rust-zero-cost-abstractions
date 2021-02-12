@@ -74,7 +74,8 @@ namespace CsharpBench
 
         public static int MaskGreaterThan(int value, int greaterThan)
         {
-            // slightly faster with SSE on Intel, given it's just a scalar anyway
+            // slightly faster with SSE than AVX on Intel, given it's just a scalar anyway
+            // note that this is _not_ unsafe (unless you try to run it on ARM or something)
             return Sse2.CompareGreaterThan(Vector128.CreateScalar(value), Vector128.CreateScalar(greaterThan)).GetElement(0);
         }
 
