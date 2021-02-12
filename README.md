@@ -5,13 +5,25 @@ This repo contains some comparative benchmarks in
 - Java, and
 - Rust. 
 
-The main purpose of which is to illustrate the cost of a commonly-used iterator abstraction in the different languages, and also demonstrate that Rust does a pretty impressive job of _zero cost abstractions_.
+Please note that it is *not* intended to compare the languages directly. I'm not knocking Java or C# here. The benchmarking framework is different for each, so a direct comparison on such a short benchmark is not valuable. What we are demonstrating here is the *relative* cost of using a functional-iterator pattern vs a simple loop in each language. I'm C# developer, so don't expect the Java benchmark to be as carefully checked.
 
-In particular, it's the following that we're benchmarking: 
+Having said that, Rust does a pretty impressive job of _zero cost abstractions_ in certain cases. There are always ways to break it, but I've presented this case as an example of where it works really well. I've presented this at work to encourage developers to think about these things:
 
-- We create a TestSet from which we sample pairs of vectors.
+* How expensive your abstraction is
+* Where your hot code is; typically it's only a small part of your code 
+  * Consider avoiding expensive things on hot code paths
+  * If it's really hot, consider some aggressive optimisation
+* Do benchmarking and profiling if you're not sure what's going on 
+* Learn some Rust; it's really fun
+
+## Benchmarking
+
+It's the following that we're benchmarking: 
+
+- We create a TestSet from which we sample pairs of vectors for each iteration.
   - The test set contains 100 vectors
   - Vectors are int32, 20k elements, _precalculated_ random values in `[0;10)`
+  - This is all pre-benchmark setup
 - Then we have various functions that calculate a number based on a pair of vectors,
   according to these rules for vectors `va` and `vb`:
   - Start with `sum = 0`
@@ -25,7 +37,7 @@ Comparing the C#, Java and Rust benchmarks, we find:
 - C# and Java iterators (Linq or Streams) are stupidly expensive compared to boring loops
   - iterators are in the 300-800 microsecond range
   - direct loop is around 65 microseconds in both languages
-- Yeah, I know I'm abusing Java -- maybe the lack of built in tuples and a zip function is a hint that we shouldn't be doing this. Disclaimer: I'm not a Java developer these days.
+- Yeah, I'm probably abusing Java -- maybe the lack of built in tuples and a zip function is a hint.
 - Would love to see how Scala does - it must be better? Just haven't had time to put it together.
 - Rust does an outstanding job even with the iterators
   - as fast as the C# AVX2 implementation
@@ -33,7 +45,7 @@ Comparing the C#, Java and Rust benchmarks, we find:
 
 Of course, this is with `target-cpu=native` for Rust to enable the AVX2 instructions. Tested on an AWS c5.xlarge (skylake xeon) machine.
 
-In all cases, I'm also measuring the time it takes to randomly pick two vectors, so that I can be sure this won't bias the results. It's irrelevant - around 20 nanoseconds.
+In all cases, I'm also measuring the time it takes to randomly pick two vectors, so that I can be sure this won't bias the results. It's irrelevant - around 20 nanoseconds for all languages.
 
 ## C#
 
@@ -67,7 +79,7 @@ Intel Xeon Platinum 8124M CPU 3.00GHz, 1 CPU, 4 logical and 2 physical cores
 
 ## Java
 
-We're using [JMH](https://github.com/openjdk/jmh). Hopefully correctly. I'm haven't coded in anger in Java in years. But the numbers appear spot on for the direct loop, so I'm relatively confident it's not a total mess.
+We're using [JMH](https://github.com/openjdk/jmh). Hopefully correctly. I'm haven't coded in anger in Java in long time, but the numbers appear spot on for the direct loop, so I'm relatively confident it's right.
 
 ```
 Benchmark                                   Mode  Cnt        Score      Error  Units

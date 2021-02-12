@@ -5,5 +5,8 @@
         "**/.settings": true,
         "**/.factorypath": true
     },
+    "files.watcherExclude": {
+        "**/target/**": true,
+    },
     "java.configuration.updateBuildConfiguration": "interactive"
 }
