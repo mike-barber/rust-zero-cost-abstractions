@@ -54,8 +54,9 @@ We're using [BenchmarkDotNet](https://benchmarkdotnet.org/articles/overview.html
 
 There are several implementations in addition to the linq ones: 
 - normal loop
-- unrolled loop, with a safe-ish branchless/mask function to replace `if (x>2)`, implemented in SSE
-- unsafe, unrolled loop
+- branchless loop, with a safe-ish branchless/mask function to replace `if (x>2)`, implemented in SSE
+- unrolled loop (also branchless)
+- unsafe, unrolled loop (also branchless)
 - unsafe AVX2 
 
 
