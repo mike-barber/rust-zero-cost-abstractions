@@ -9,6 +9,7 @@ using Xunit;
 namespace CsharpBench
 {
     [DisassemblyDiagnoser]
+    [MemoryDiagnoser]
     public class FunctionsBench
     {
         TestSet testSet = new TestSet(100, 20_000);
