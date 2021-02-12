@@ -162,7 +162,34 @@ namespace CsharpBench
                     var pa = ptra;
                     var pb = ptrb;
                     var paEnd = ptra + va.Length;
+                    var paChunkEnd = ptra + ((va.Length >> 2) << 2);
 
+                    long sum0 = 0;
+                    long sum1 = 0;
+                    long sum2 = 0;
+                    long sum3 = 0;
+
+                    while (pa < paChunkEnd)
+                    {
+                        var m0 = MaskGreaterThan(pa[0], 2);
+                        var m1 = MaskGreaterThan(pa[1], 2);
+                        var m2 = MaskGreaterThan(pa[2], 2);
+                        var m3 = MaskGreaterThan(pa[3], 2);
+
+                        // multiply through, masking result
+                        var v0 = m0 & (pa[0] * pb[0]);
+                        var v1 = m1 & (pa[1] * pb[1]);
+                        var v2 = m2 & (pa[2] * pb[2]);
+                        var v3 = m3 & (pa[3] * pb[3]);
+
+                        sum0 += v0;
+                        sum1 += v1;
+                        sum2 += v2;
+                        sum3 += v3;
+
+                        pa += 4;
+                        pb += 4;
+                    }
                     while (pa < paEnd)
                     {
                         var a = *pa;
@@ -171,12 +198,14 @@ namespace CsharpBench
                         // create mask
                         int mask = MaskGreaterThan(a, 2);
 
-                        // mutliply through, masking result
-                        sum += mask & (a * b);
+                        // multiply through, masking result
+                        sum0 += mask & (a * b);
 
                         pa += 1;
                         pb += 1;
                     }
+
+                    sum += (sum0+sum1) + (sum2+sum3);
                 }
             }
             return sum;

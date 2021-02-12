@@ -11,14 +11,14 @@ Intel Xeon Platinum 8124M CPU 3.00GHz, 1 CPU, 4 logical and 2 physical cores
 
 |           Method |          Mean |        Error |       StdDev | Gen 0 | Gen 1 | Gen 2 | Allocated | Code Size |
 |----------------- |--------------:|-------------:|-------------:|------:|------:|------:|----------:|----------:|
-|           Direct |  63,813.81 ns |   165.540 ns |   138.234 ns |     - |     - |     - |         - |     272 B |
-| DirectBranchless |  24,358.65 ns |    22.175 ns |    18.517 ns |     - |     - |     - |         - |     317 B |
-|   DirectUnrolled |  22,458.46 ns |    67.313 ns |    59.671 ns |     - |     - |     - |         - |     573 B |
-|     DirectUnsafe |  21,844.39 ns |    63.542 ns |    59.437 ns |     - |     - |     - |         - |     419 B |
-|  DirectUnsafeAvx |   5,278.74 ns |   102.595 ns |   159.728 ns |     - |     - |     - |         - |     560 B |
-|         Iterator | 555,791.22 ns | 2,549.665 ns | 2,260.212 ns |     - |     - |     - |     264 B |    1936 B |
-|  IteratorSimpler | 563,697.39 ns | 2,462.605 ns | 2,303.522 ns |     - |     - |     - |     200 B |    1307 B |
-|   SelectBaseline |      27.81 ns |     0.126 ns |     0.118 ns |     - |     - |     - |         - |     134 B |
+|           Direct |  63,685.72 ns |   108.506 ns |    90.607 ns |     - |     - |     - |         - |     272 B |
+| DirectBranchless |  24,463.49 ns |   215.987 ns |   180.359 ns |     - |     - |     - |         - |     317 B |
+|   DirectUnrolled |  22,166.03 ns |    78.709 ns |    69.773 ns |     - |     - |     - |         - |     573 B |
+|     DirectUnsafe |  17,731.75 ns |    11.628 ns |     9.710 ns |     - |     - |     - |         - |     670 B |
+|  DirectUnsafeAvx |   5,362.40 ns |   104.761 ns |   153.557 ns |     - |     - |     - |         - |     560 B |
+|         Iterator | 554,312.97 ns | 1,788.428 ns | 1,585.395 ns |     - |     - |     - |     265 B |    1936 B |
+|  IteratorSimpler | 549,125.86 ns | 1,559.249 ns | 1,382.233 ns |     - |     - |     - |     200 B |    1307 B |
+|   SelectBaseline |      26.79 ns |     0.102 ns |     0.090 ns |     - |     - |     - |         - |     134 B |
 
 ## Java
 
