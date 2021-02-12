@@ -12,8 +12,8 @@ namespace CsharpBench
     [MemoryDiagnoser]
     public class FunctionsBench
     {
-        TestSet testSet = new TestSet(100, 20_000);
-        Random rng = new Random();
+        readonly TestSet _testSet = new(100, 20_000);
+        readonly Random _rng = new();
 
         public FunctionsBench()
         {
@@ -46,8 +46,8 @@ namespace CsharpBench
             Assert.Equal(expected, CalculateIteratorSimpler(va, vb));
 
             // check the hand-coded risky ones agree for long vectors
-            var first = self.testSet.Get(0);
-            var second = self.testSet.Get(1);
+            var first = self._testSet.Get(0);
+            var second = self._testSet.Get(1);
             Assert.Equal(CalculateDirect(first, second), CalculateDirectUnrolled(first, second));
             Assert.Equal(CalculateDirect(first, second), CalculateDirectUnsafe(first, second));
             Assert.Equal(CalculateDirect(first, second), CalculateDirectUnsafeAvx(first, second));
@@ -283,7 +283,7 @@ namespace CsharpBench
         [Benchmark]
         public long Direct()
         {
-            var (va, vb) = testSet.Sample(rng);
+            var (va, vb) = _testSet.Sample(_rng);
             var res = CalculateDirect(va, vb);
             return res;
         }
@@ -291,7 +291,7 @@ namespace CsharpBench
         [Benchmark]
         public long DirectBranchless()
         {
-            var (va, vb) = testSet.Sample(rng);
+            var (va, vb) = _testSet.Sample(_rng);
             var res = CalculateDirectBranchless(va, vb);
             return res;
         }
@@ -299,7 +299,7 @@ namespace CsharpBench
         [Benchmark]
         public long DirectUnrolled()
         {
-            var (va, vb) = testSet.Sample(rng);
+            var (va, vb) = _testSet.Sample(_rng);
             var res = CalculateDirectUnrolled(va, vb);
             return res;
         }
@@ -307,7 +307,7 @@ namespace CsharpBench
         [Benchmark]
         public long DirectUnsafe()
         {
-            var (va, vb) = testSet.Sample(rng);
+            var (va, vb) = _testSet.Sample(_rng);
             var res = CalculateDirectUnsafe(va, vb);
             return res;
         }
@@ -315,7 +315,7 @@ namespace CsharpBench
         [Benchmark]
         public long DirectUnsafeAvx()
         {
-            var (va, vb) = testSet.Sample(rng);
+            var (va, vb) = _testSet.Sample(_rng);
             var res = CalculateDirectUnsafeAvx(va, vb);
             return res;
         }
@@ -323,7 +323,7 @@ namespace CsharpBench
         [Benchmark]
         public long Iterator()
         {
-            var (va, vb) = testSet.Sample(rng);
+            var (va, vb) = _testSet.Sample(_rng);
             var res = CalculateIterator(va, vb);
             return res;
         }
@@ -331,7 +331,7 @@ namespace CsharpBench
         [Benchmark]
         public long IteratorSimpler()
         {
-            var (va, vb) = testSet.Sample(rng);
+            var (va, vb) = _testSet.Sample(_rng);
             var res = CalculateIteratorSimpler(va, vb);
             return res;
         }
@@ -339,7 +339,7 @@ namespace CsharpBench
         [Benchmark]
         public int SelectBaseline()
         {
-            var (va, vb) = testSet.Sample(rng);
+            var (va, _) = _testSet.Sample(_rng);
             return va.Length;
         }
 
