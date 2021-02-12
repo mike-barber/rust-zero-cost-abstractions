@@ -20,6 +20,8 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
+import scala.Tuple2;
+
 @State(Scope.Benchmark)
 public class FunctionsBenchmark {
 
@@ -89,39 +91,29 @@ public class FunctionsBenchmark {
         var vb = Sample(ThreadState.rng);
 
         long sum = zip(Arrays.stream(va), Arrays.stream(vb))
-            .filter(t -> t.a > 2)
-            .map(t -> (long)(t.a * t.b))
+            .filter(t -> t._1 > 2)
+            .map(t -> (long)(t._1 * t._2))
             .reduce(0l, Long::sum);
                    
         return sum;
     }
 
-    // pretty much have to define this myself
-    public class Tuple {
-        public int a;
-        public int b;
-        public Tuple(int a, int b) {
-            this.a = a;
-            this.b = b;
-        }
-    }
-
     // pretty much have to write this; no built-in zip iteration
-    public Stream<Tuple> zip(IntStream sa, IntStream sb) {
+    // just returning Scala Tuple2
+    public Stream<Tuple2<Integer,Integer>> zip(IntStream sa, IntStream sb) {
         final var ia = sa.iterator();
         final var ib = sb.iterator();
-        Iterator<Tuple> iter = new Iterator<Tuple>() {
+        Iterator<Tuple2<Integer,Integer>> iter = new Iterator<Tuple2<Integer,Integer>>() {
             @Override
             public boolean hasNext() {
                 return ia.hasNext() && ib.hasNext();
             }
             @Override
-            public Tuple next() {
-                return new Tuple(ia.next(), ib.next());
+            public Tuple2<Integer,Integer> next() {
+                return Tuple2.apply(ia.next(), ib.next());
             }
         };
-        Iterable<Tuple> iterable = () -> iter;
+        Iterable<Tuple2<Integer,Integer>> iterable = () -> iter;
         return StreamSupport.stream(iterable.spliterator(),false);
     }
-
 }
