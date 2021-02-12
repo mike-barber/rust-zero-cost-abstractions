@@ -22,16 +22,17 @@ It's the following that we're benchmarking:
 
 - We create a TestSet from which we sample pairs of vectors for each iteration.
   - The test set contains 100 vectors
-  - Vectors are int32, 20k elements, _precalculated_ random values in `[0;10)`
+  - Vectors are linear arrays, int32, 20k elements, _precalculated_ random values in `[0;10)`
+  - Around 8MB dataset
   - This is all pre-benchmark setup
 - Then we have various functions that calculate a number based on a pair of vectors,
   according to these rules for vectors `va` and `vb`:
-  - Start with `sum = 0`
+  - start with `sum = 0`
   - for every pair `a`, `b` in aligned vectors `va`, `vb`
      - if `a > 2`, then `sum += a * b`
   - return `sum`
 
-Pretty simple stuff, but interesting enough to demonstrate performance. The `a>2` is enough to mess up any compiler that decides to use branch instructions, which of course then happens. But that's not the main point. 
+Pretty simple stuff, but interesting enough to demonstrate performance. The `a>2` is enough to mess up any compiler that decides to use branch instructions, which of course then happens. But that's not the focus of this -- we're looking at the cost of iterators :)
 
 Comparing the C#, Java and Rust benchmarks, we find:
 - C# and Java iterators (Linq or Streams) are stupidly expensive compared to boring loops
