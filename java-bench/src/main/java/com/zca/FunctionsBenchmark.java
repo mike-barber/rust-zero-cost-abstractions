@@ -11,6 +11,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import com.google.common.collect.Streams;
+
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -99,7 +101,8 @@ public class FunctionsBenchmark {
     }
 
     // pretty much have to write this; no built-in zip iteration
-    // just returning Scala Tuple2
+    // just returning Scala Tuple2; On the plus side, we're not
+    // having to box the integers in the IntStream to Stream<Integer>
     public Stream<Tuple2<Integer,Integer>> zip(IntStream sa, IntStream sb) {
         final var ia = sa.iterator();
         final var ib = sb.iterator();
@@ -115,5 +118,24 @@ public class FunctionsBenchmark {
         };
         Iterable<Tuple2<Integer,Integer>> iterable = () -> iter;
         return StreamSupport.stream(iterable.spliterator(),false);
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    @Fork(value = 1, warmups = 1)
+    public long benchmarkIteratorGuava() {
+        var va = Sample(ThreadState.rng);
+        var vb = Sample(ThreadState.rng);
+
+        long sum = Streams.zip(
+                Arrays.stream(va).boxed(), 
+                Arrays.stream(vb).boxed(), 
+                (a,b) -> Tuple2.apply(a, b))
+            .filter(t -> t._1 > 2)
+            .map(t -> (long)(t._1 * t._2))
+            .reduce(0l, Long::sum);
+               
+        return sum;
     }
 }
