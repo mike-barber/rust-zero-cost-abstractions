@@ -196,7 +196,7 @@ mod tests {
     fn calculate_direct_index_correct() {
         let (a, b) = reference_vecs();
         let res = calculate_direct_index(&a, &b);
-        assert_eq!(EXPECTED_RESULT, res, "direct was {}", res);
+        assert_eq!(EXPECTED_RESULT, res, "direct_index was {}", res);
     }
 
     #[test]
@@ -217,6 +217,6 @@ mod tests {
     fn calculate_avx_correct() {
         let (a, b) = reference_vecs();
         let res = calculate_avx(&a, &b);
-        assert_eq!(EXPECTED_RESULT, res, "fold was {}", res);
+        assert_eq!(EXPECTED_RESULT, res, "avx was {}", res);
     }
 }
