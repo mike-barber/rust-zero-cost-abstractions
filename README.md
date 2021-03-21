@@ -101,5 +101,6 @@ rng select baseline     time:   [19.238 ns 19.249 ns 19.262 ns]
 calculate_direct_index  time:   [10.721 us 10.744 us 10.775 us]                                    
 calculate_direct        time:   [6.7978 us 6.8134 us 6.8290 us]                              
 calculate_iter          time:   [5.8937 us 5.9042 us 5.9195 us]                            
-calculate_fold          time:   [5.8410 us 5.8474 us 5.8539 us]                            
+calculate_fold          time:   [5.8410 us 5.8474 us 5.8539 us]       
+calculate_avx           time:   [5.6277 us 5.6313 us 5.6353 us]                       
 ```
