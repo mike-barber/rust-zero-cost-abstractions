@@ -13,6 +13,7 @@
 
 use rand::{distributions::Uniform, Rng};
 
+
 /// TestSet maintains a bunch of vectors, and provides a way to
 /// randomly sample pairs of them.
 ///
@@ -78,7 +79,7 @@ pub fn calculate_direct_index(slice_a: &[i32], slice_b: &[i32]) -> i64 {
     let len = slice_a.len();
     let aa = &slice_a[0..len];
     let bb = &slice_b[0..len];
-    
+
     let mut res = 0;
     for i in 0..len {
         if aa[i] > 2 {
@@ -123,6 +124,55 @@ pub fn calculate_fold(slice_a: &[i32], slice_b: &[i32]) -> i64 {
         })
 }
 
+/// explicit AVX implementation using intrinsics
+pub fn calculate_avx(slice_a: &[i32], slice_b: &[i32]) -> i64 {
+    use std::arch::x86_64::*;
+    use std::mem::transmute;
+    
+    // initial chunks of 8
+    const SIZE: usize = 8;
+    let value2 = unsafe { _mm256_set1_epi32(2) }; // broadcast 2
+    let mut acc1 = unsafe { _mm256_setzero_si256() };
+    let mut acc2 = unsafe { _mm256_setzero_si256() };
+    for (chunk_a, chunk_b) in slice_a.chunks_exact(SIZE).zip(slice_b.chunks_exact(SIZE)) {
+        unsafe {
+            // load slices into AVX registers
+            let mut va = _mm256_loadu_si256(chunk_a.as_ptr() as *const __m256i);
+            let vb = _mm256_loadu_si256(chunk_b.as_ptr() as *const __m256i);
+
+            // zero out `va` elements where they're less than 2
+            let mask = _mm256_cmpgt_epi32(va, value2);
+            va = _mm256_and_si256(va, mask);
+
+            // odd numbered elements (i32 * i32 -> i64)
+            let m1 = _mm256_mul_epi32(va, vb);
+            acc1 = _mm256_add_epi64(acc1, m1); // note: 64-bit integer addition
+
+            // shuffle adjacent to switch even/odd and multiply odd elements again
+            let shuf_va = _mm256_shuffle_epi32(va, 0b10_11_00_01);
+            let shuf_vb = _mm256_shuffle_epi32(vb, 0b10_11_00_01);
+            let m2 = _mm256_mul_epi32(shuf_va, shuf_vb);
+            acc2 = _mm256_add_epi64(acc2, m2); // note: 64-bit integer addition
+        }
+    }
+
+    // remainder portion of chunks_exact won't fit into AVX registers.
+    // we could do a masked load, but it's easier to just call into an existing
+    // method.
+    let remainder = calculate_iter(
+        slice_a.chunks_exact(SIZE).remainder(),
+        slice_b.chunks_exact(SIZE).remainder(),
+    );
+
+    let sum: i64 = unsafe {
+        let acc = _mm256_add_epi64(acc1, acc2);
+        let acc: &[i64; 4] = transmute(&acc);
+        acc.iter().sum::<i64>() + remainder
+    };
+
+    sum
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -142,7 +192,6 @@ mod tests {
         assert_eq!(EXPECTED_RESULT, res, "direct was {}", res);
     }
 
-    
     #[test]
     fn calculate_direct_index_correct() {
         let (a, b) = reference_vecs();
@@ -161,6 +210,13 @@ mod tests {
     fn calculate_fold_correct() {
         let (a, b) = reference_vecs();
         let res = calculate_iter(&a, &b);
+        assert_eq!(EXPECTED_RESULT, res, "fold was {}", res);
+    }
+
+    #[test]
+    fn calculate_avx_correct() {
+        let (a, b) = reference_vecs();
+        let res = calculate_avx(&a, &b);
         assert_eq!(EXPECTED_RESULT, res, "fold was {}", res);
     }
 }

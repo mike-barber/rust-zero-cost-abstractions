@@ -45,6 +45,14 @@ fn function_benchmark(c: &mut Criterion) {
             res
         })
     });
+
+    c.bench_function("calculate_avx", |b| {
+        b.iter(|| {
+            let vecs = test_set.sample_pair(&mut rng);
+            let res = calculate_avx(vecs.0, vecs.1);
+            res
+        })
+    });
 }
 
 criterion_group!(benches, function_benchmark);
