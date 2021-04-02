@@ -83,11 +83,10 @@ The table has some blanks. I can't use intrinsics in Java yet, and there's no po
 We're using [BenchmarkDotNet](https://benchmarkdotnet.org/articles/overview.html)
 
 There are several implementations in addition to the traditional ones: 
-- normal loop
 - branchless loop, with a safe-ish branchless/mask function to replace `if (x>2)`, implemented using SSE intrinsics
 - unrolled loop (also branchless)
 - unsafe, unrolled loop (also branchless) using pointer arithmetic
-- unsafe AVX2 loop
+- unsafe, using AVX2 SIMD intrinsics
 
 C# responds well to all of these classic optimisation techniques, because the JIT compiler doesn't have the spare time available to do this stuff for you.
 
