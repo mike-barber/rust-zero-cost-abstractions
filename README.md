@@ -7,7 +7,7 @@ This repo contains some comparative benchmarks in
 
 Please note that it is *not* intended to compare the languages directly. Specifically, I'm not knocking Java or C# here: both are good high-level languages. The benchmarking framework is different for each, so a direct comparison on such a short benchmark is not valuable. What we are demonstrating here is the *relative* cost of using a functional-iterator pattern vs a simple loop in each language. I'm C# developer, so don't expect the Java benchmark to be as carefully checked.
 
-Having said that, Rust does a pretty impressive job of _zero cost abstractions_ in certain cases. There are always ways to break it, but I've presented this case as an example of where it works really well. I've presented this at work to encourage developers to think about these things:
+Having said that, Rust does an impressive job of **zero cost abstractions** in certain cases, in much the same way that C++ does (the term is originally from the C++ world). There are always ways to break it, but I've presented this case as an example of where it works really well. I've presented this at work to encourage developers to think about these things:
 
 * How expensive your abstraction is
 * Where your hot code is; typically it's only a small part of your code 
@@ -20,11 +20,11 @@ Having said that, Rust does a pretty impressive job of _zero cost abstractions_ 
 
 It's the following that we're benchmarking: 
 
-- We create a TestSet from which we sample pairs of vectors for each iteration.
+- We create a `TestSet` from which we sample pairs of vectors for each iteration.
   - The test set contains 100 vectors
-  - Vectors are linear arrays, int32, 20k elements, _precalculated_ random values in `[0;10)`
+  - Vectors are linear vectors, int32, 20k elements, _pre-initialized_ random values in `[0;10)`
   - Around 8MB dataset to pick vectors from
-  - This is all pre-benchmark setup
+  - This is all set up before running benchmarks
 - Then we have various functions that calculate a number based on a pair of vectors,
   according to these rules for vectors `va` and `vb`:
   - start with `sum = 0`
@@ -32,34 +32,38 @@ It's the following that we're benchmarking:
      - if `a > 2`, then `sum += a * b`
   - return `sum`
 
-Pretty simple stuff, but interesting enough to demonstrate performance. The `a>2` is enough to mess up any compiler that decides to use branch instructions, which of course then happens in the Java/C# case. But that's not the focus of this -- we're looking at the cost of iterators primarily.
+Pretty simple stuff, but interesting enough to demonstrate some performance characteristics. The `a>2` is enough to mess up any compiler that decides to use branch instructions, which of course then happens in the Java/C# case. But that's not the focus of this -- we're looking at the cost of iterators primarily.
 
 Comparing the C#, Java and Rust benchmarks, we find:
 
-- C# and Java iterators (Linq or Streams) are stupidly expensive compared to boring loops
+- C# and Java iterators (Linq or Streams) are stupidly expensive compared to classic loops
   - iterators are in the 300-800 microsecond range
   - direct loop is around 40-50 microseconds in both languages
-- C# and Java boring loops aren't very fast, and can be improved using the classic techniques
+  - i.e. the simple loop is around 10X faster, so you need to pay attention to where you're using iterators
+- C# and Java classic loops themselves also aren't very fast, and can be improved using the classic techniques:
   - loop unrolling
   - branchless programming
   - SIMD intrinsics
   - only tested this in C#; I believe Java doesn't support intrinsics just yet
-- Iterators in Java might be a bit unfair -- the lack of built-in tuples or a `zip` function is a hint.
-- Would love to see how Scala or Go does, but I haven't had time to look at these.
+- Iterators in Java might be a bit unfair -- the lack of built-in tuples or a `zip` function is a hint
+  - On that note, I'd love to see how Scala or Go does, but I haven't had time to look at these.
 - Rust does an outstanding job with the iterators
-  - almost as fast as a hand-coded AVX2 implementation
   - around 3 microseconds
-  - iterators are actually faster than simple loops
-- Rust is fast for a few reasons, including:
-  - iterators are monomorphic and statically dispatched with no heap allocation
-  - the compiler and llvm backend are *very* good at the classic optimisations, and
-  - it will happily use SIMD instructions automatically
+  - almost as fast as a hand-coded AVX2 implementation
+  - iterators are actually faster than simple loops in this case, but they're usually in the same ballpark
 
-Of course, this is with `target-cpu=native` for Rust to enable the AVX2 instructions. This is enabled in the [.cargo/config](.cargo/config) file. I have Windows and Linux targets set there -- if you're keen to give this a go on a Mac, you'll need to add the config there. 
+Of course, this is with `target-cpu=native` for Rust to enable AVX2 instructions on my machine. This is enabled in the [.cargo/config](.cargo/config) file. I have Windows and Linux targets set there -- if you're keen to give this a go on a Mac, you'll need to add the config there. All benchmarks were run on my AMD Ryzen 3900X system, under WSL2. 
 
 In all cases, I'm also measuring the time it takes to randomly pick two vectors, so that I can be sure this won't bias the results. It's irrelevant - around 20 nanoseconds for all languages.
 
-All benchmarks were run on an an AMD Ryzen 3900X system, under WSL2. 
+Rust is fast for a few reasons, including:
+
+- iterators are monomorphic and statically dispatched with no heap allocation
+- the actual iterator code is optimised away
+- the Rust compiler and LLVM backend are *very* good at the classic optimisations, and
+- it will happily use SIMD instructions automatically
+
+You'll notice you pay for these benefits at compile time -- it takes a while for the compiler to do all this work.
 
 ## Summary
 
@@ -72,7 +76,7 @@ Times are in **nanoseconds**
 | Unrolled, branchless    | 15,892        |               |                |
 | AVX2 intrinsics         | 2,071         |               | 1,954          |
 
-The table has some blanks. I can't use intrinsics in Java yet, and there's no point unrolling a loop in Rust. 
+The table has some blanks. I can't use intrinsics in Java yet, and there's no point unrolling a loop in Rust by hand. 
 
 ## C#
 
@@ -85,7 +89,7 @@ There are several implementations in addition to the traditional ones:
 - unsafe, unrolled loop (also branchless) using pointer arithmetic
 - unsafe AVX2 loop
 
-C# responds well to all of these classic optimisation techniques, because the JIT compiler doesn't have the inclination to do this stuff for you.
+C# responds well to all of these classic optimisation techniques, because the JIT compiler doesn't have the spare time available to do this stuff for you.
 
 ```
 BenchmarkDotNet=v0.12.1, OS=ubuntu 20.04
@@ -138,3 +142,5 @@ calculate_avx           time:   [1.9541 us 1.9586 us 1.9640 us]
 ```
 
 Rust is almost **boring**, because it produces such fast code: there's often no point in writing a manually-unrolled loop. Sometimes it's worth writing AVX2 code or even inline assembly, but it has to be a really hot path for this to make sense. With Rust, the AVX2 code is only 1.8X faster than the iterator, and a lot less maintainable. Compare this with the over 23X improvement in the C# case.
+
+
