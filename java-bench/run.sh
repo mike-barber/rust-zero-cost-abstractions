@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mvn clean install && java -jar target/benchmarks.jar
+mvn clean verify && java -jar target/benchmarks.jar -r 1 -w 1

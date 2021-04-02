@@ -8,8 +8,8 @@ using Xunit;
 
 namespace CsharpBench
 {
-    [DisassemblyDiagnoser]
-    [MemoryDiagnoser]
+    //[DisassemblyDiagnoser]
+    //[MemoryDiagnoser]
     public class FunctionsBench
     {
         readonly TestSet _testSet = new(100, 20_000);
