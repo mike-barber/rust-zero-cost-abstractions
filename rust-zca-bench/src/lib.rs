@@ -13,7 +13,6 @@
 
 use rand::{distributions::Uniform, Rng};
 
-
 /// TestSet maintains a bunch of vectors, and provides a way to
 /// randomly sample pairs of them.
 ///
@@ -128,7 +127,7 @@ pub fn calculate_fold(slice_a: &[i32], slice_b: &[i32]) -> i64 {
 pub fn calculate_avx(slice_a: &[i32], slice_b: &[i32]) -> i64 {
     use std::arch::x86_64::*;
     use std::mem::transmute;
-    
+
     // initial chunks of 8
     const SIZE: usize = 8;
     let value2 = unsafe { _mm256_set1_epi32(2) }; // broadcast 2
@@ -177,11 +176,11 @@ pub fn calculate_avx(slice_a: &[i32], slice_b: &[i32]) -> i64 {
 mod tests {
     use super::*;
 
-    const EXPECTED_RESULT: i64 = 900;
+    const EXPECTED_RESULT: i64 = 450;
     fn reference_vecs() -> (Vec<i32>, Vec<i32>) {
         (
-            vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            vec![11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+            vec![5, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            vec![-10, 12, 13, 14, 15, 16, 17, 18, 19, -20],
         )
     }
 

@@ -22,6 +22,20 @@ namespace CsharpBench
         // quick self test will throw if you've got something wrong
         public static void SelfTest()
         {
+            // check valid (including a negative value)
+            var va = new[] { 5, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+            var vb = new[] { -10, 12, 13, 14, 15, 16, 17, 18, 19, -20 };
+            var expected = 450;
+
+            Assert.Equal(expected, CalculateDirect(va, vb));
+            Assert.Equal(expected, CalculateDirectBranchless(va, vb));
+            Assert.Equal(expected, CalculateDirectUnrolled(va, vb));
+            Assert.Equal(expected, CalculateDirectUnsafe(va, vb));
+            Assert.Equal(expected, CalculateDirectUnsafeAvx(va, vb));
+            Assert.Equal(expected, CalculateIterator(va, vb));
+            Assert.Equal(expected, CalculateIteratorSimpler(va, vb));
+
+            // run all benchmark methods once -- easier to debug if there's an issue
             var self = new FunctionsBench();
             self.Direct();
             self.DirectBranchless();
@@ -32,20 +46,7 @@ namespace CsharpBench
             self.IteratorSimpler();
             self.SelectBaseline();
 
-            // check valid 
-            var va = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-            var vb = new[] { 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
-            var expected = 900;
-
-            Assert.Equal(expected, CalculateDirect(va, vb));
-            Assert.Equal(expected, CalculateDirectBranchless(va, vb));
-            Assert.Equal(expected, CalculateDirectUnrolled(va, vb));
-            Assert.Equal(expected, CalculateDirectUnsafe(va, vb));
-            Assert.Equal(expected, CalculateDirectUnsafeAvx(va, vb));
-            Assert.Equal(expected, CalculateIterator(va, vb));
-            Assert.Equal(expected, CalculateIteratorSimpler(va, vb));
-
-            // check the hand-coded risky ones agree for long vectors
+            // run the hand-coded risky ones with long vectors and check against simple ones
             var first = self._testSet.Get(0);
             var second = self._testSet.Get(1);
             Assert.Equal(CalculateDirect(first, second), CalculateDirectUnrolled(first, second));
@@ -138,7 +139,7 @@ namespace CsharpBench
                 var a = spana[i];
                 var b = spanb[i];
 
-                var m = MaskGreaterThan(a,2);
+                var m = MaskGreaterThan(a, 2);
 
                 var v = m & (a * b);
                 sum += v;
@@ -205,7 +206,7 @@ namespace CsharpBench
                         pb += 1;
                     }
 
-                    sum += (sum0+sum1) + (sum2+sum3);
+                    sum += (sum0 + sum1) + (sum2 + sum3);
                 }
             }
             return sum;
