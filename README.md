@@ -16,6 +16,10 @@ Having said that, Rust does an impressive job of **zero cost abstractions** in c
 * Do benchmarking and profiling if you're not sure what's going on 
 * Learn some Rust; it's really fun!
 
+## Presentation
+
+I presented this work at a Rust Dublin meetup, and I've included a copy of the [presentation slides](zero_cost_abstractions_presentation.pdf) here.
+
 ## Benchmarking
 
 It's the following that we're benchmarking: 
