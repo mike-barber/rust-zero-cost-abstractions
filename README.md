@@ -1,4 +1,4 @@
-# Cost of Abstractions
+# Costs of iterators and Zero Cost Abstractions in Rust
 
 ## Presentation
 
@@ -14,7 +14,7 @@ There are several other good talks on the [Rust Dublin](https://www.youtube.com/
 This repo contains some comparative benchmarks for iterator patterns in
 - C# 
 - Java
-- Rust. 
+- Rust
 
 Please note that it is *not* intended to compare the languages directly. Specifically, I'm not knocking Java or C# here: both are good high-level languages. The benchmarking framework is different for each, so a direct comparison on such a short benchmark is not valuable. What we are demonstrating here is the *relative* cost of using a functional-iterator pattern vs a simple loop in each language. I'm C# developer, so don't expect the Java benchmark to be as carefully checked.
 
