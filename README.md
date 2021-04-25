@@ -1,8 +1,19 @@
 # Cost of Abstractions
 
-This repo contains some comparative benchmarks in
-- C#, 
-- Java, and
+## Presentation
+
+I presented this work at a Rust Dublin meetup.
+- The recording is available here: https://www.youtube.com/watch?v=mX1BsqTfy6E 
+- I've also included a copy of the [presentation slides](zero_cost_abstractions_presentation.pdf)
+- There is a bit of extra info on SIMD in the presentation that I have not reproduced in this README
+
+There are several other good talks on the [Rust Dublin](https://www.youtube.com/channel/UCF6BQExwkd4Fmk1Nx_G6Fmw) channel, so theck it out ;)
+
+## Introduction
+
+This repo contains some comparative benchmarks for iterator patterns in
+- C# 
+- Java
 - Rust. 
 
 Please note that it is *not* intended to compare the languages directly. Specifically, I'm not knocking Java or C# here: both are good high-level languages. The benchmarking framework is different for each, so a direct comparison on such a short benchmark is not valuable. What we are demonstrating here is the *relative* cost of using a functional-iterator pattern vs a simple loop in each language. I'm C# developer, so don't expect the Java benchmark to be as carefully checked.
@@ -15,10 +26,6 @@ Having said that, Rust does an impressive job of **zero cost abstractions** in c
   * If it's a really hot path, consider some aggressive optimisation
 * Do benchmarking and profiling if you're not sure what's going on 
 * Learn some Rust; it's really fun!
-
-## Presentation
-
-I presented this work at a Rust Dublin meetup, and I've included a copy of the [presentation slides](zero_cost_abstractions_presentation.pdf) here.
 
 ## Benchmarking
 
