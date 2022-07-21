@@ -10,7 +10,7 @@ edition = "2018"
 rand = "0.8"
 
 [dev-dependencies]
-criterion = "0.3"
+criterion = "0.3.6"
 
 [[bench]]
 name = "zca_benchmark"
