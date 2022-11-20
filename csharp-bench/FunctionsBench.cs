@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -73,11 +74,27 @@ namespace CsharpBench
             return sum;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long CalculateDirectTernary(int[] va, int[] vb)
+        {
+            long sum = 0;
+            for (var i = 0; i < va.Length; ++i)
+            {
+                var a = va[i];
+                var b = vb[i];
+
+                var aa = a > 2 ? a : 0;
+                sum += aa * b;
+            }
+            return sum;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int MaskGreaterThan(int value, int greaterThan)
         {
             // slightly faster with SSE than AVX on Intel, given it's just a scalar anyway
             // note that this is _not_ unsafe (unless you try to run it on ARM or something)
-            return Sse2.CompareGreaterThan(Vector128.CreateScalar(value), Vector128.CreateScalar(greaterThan)).GetElement(0);
+            return Sse2.CompareGreaterThan(Vector128.CreateScalar(value), Vector128.CreateScalar(greaterThan)).ToScalar();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -100,6 +117,25 @@ namespace CsharpBench
             }
             return sum;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long CalculateZipBranchless(int[] va, int[] vb)
+        {
+            long sum = 0;
+            foreach (var (a,b) in va.Zip(vb)) 
+            {
+                // mask is 0xFFFF when flag is true
+                // bool includeFlag = a > 2;
+                // int includeMask = -System.Runtime.CompilerServices.Unsafe.As<bool, int>(ref includeFlag);
+                int includeMask = MaskGreaterThan(a, 2);
+
+                // mutliply apply mask
+                int gated = includeMask & (a * b);
+                sum += gated;
+            }
+            return sum;
+        }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long CalculateDirectUnrolled(int[] va, int[] vb)
@@ -320,10 +356,26 @@ namespace CsharpBench
         }
 
         [Benchmark]
+        public long DirectTernary()
+        {
+            var (va, vb) = _testSet.Sample(_rng);
+            var res = CalculateDirectTernary(va, vb);
+            return res;
+        }
+
+        [Benchmark]
         public long DirectBranchless()
         {
             var (va, vb) = _testSet.Sample(_rng);
             var res = CalculateDirectBranchless(va, vb);
+            return res;
+        }
+
+        [Benchmark]
+        public long ZipBranchless()
+        {
+            var (va, vb) = _testSet.Sample(_rng);
+            var res = CalculateZipBranchless(va, vb);
             return res;
         }
 
